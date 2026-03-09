@@ -10,6 +10,7 @@ export default function FormPanel({
   data, set, activeTab, setActiveTab,
   photoUrl, handlePhoto, handleDrop, download, downloadInstagram,
   themeColors, deckStructure, gameSlug, layoutConfig,
+  logoImg, onLogoUpload,
 }) {
   const tabs = ["info", "evento", "mazo", "posicion"];
   const tabLabels = { info: "Ganador", evento: "Evento", mazo: "Mazo", posicion: "Posicion" };
@@ -117,7 +118,7 @@ export default function FormPanel({
 
         {/* POSICION TAB — editor manual de posicionamiento */}
         {activeTab === "posicion" && <>
-          <PositionEditor data={data} set={set} colors={themeColors} layoutConfig={layoutConfig} />
+          <PositionEditor data={data} set={set} colors={themeColors} layoutConfig={layoutConfig} logoImg={logoImg} onLogoUpload={onLogoUpload} />
         </>}
       </div>
 
@@ -232,9 +233,8 @@ function TextArea({ label, value, onChange, rows, hint, colors }) {
  *   - Offset nombre Y: posicion vertical de la primera linea del nombre
  *   - Offset arquetipo Y: posicion vertical del nombre del mazo
  */
-function PositionEditor({ data, set, colors, layoutConfig }) {
+function PositionEditor({ data, set, colors, layoutConfig, logoImg, onLogoUpload }) {
   const pos = data._pos || {};
-  // Valores por defecto del tema actual (se usan como fallback)
   const defaults = {
     nameOffsetFromBottom: layoutConfig?.name?.offsetFromBottom ?? 55,
     nameXShift: -30,
@@ -242,15 +242,31 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
     labelOffsetY: -4,
     firstNameOffsetY: 12,
     archetypeOffsetY: 55,
+    lineLeftLen: 40,
+    lineRightLen: 50,
+    lineLeftX: 18,
+    lineRightX: 172,
+    nameFontSize: 23,
+    nameBold: false,
+    logoX: 10,
+    logoY: 10,
+    logoSize: 60,
+    logoCorner: "top-left",
   };
 
   const update = (key) => (e) => {
-    const val = parseFloat(e.target.value);
+    const val = e.target.type === "checkbox" ? e.target.checked : parseFloat(e.target.value);
     set("_pos")({ target: { value: { ...pos, [key]: val } } });
   };
 
   const reset = () => {
     set("_pos")({ target: { value: {} } });
+  };
+
+  const handleLogoFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    onLogoUpload(file);
   };
 
   return (
@@ -264,7 +280,7 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         POSICION DEL NOMBRE DEL GANADOR
       </div>
 
-      <Slider
+      <SliderWithInput
         label="Offset desde abajo"
         value={pos.nameOffsetFromBottom ?? defaults.nameOffsetFromBottom}
         min={0} max={200} step={1}
@@ -272,7 +288,7 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         colors={colors}
         hint="Distancia vertical desde el footer"
       />
-      <Slider
+      <SliderWithInput
         label="Desplazamiento X"
         value={pos.nameXShift ?? defaults.nameXShift}
         min={-150} max={150} step={1}
@@ -280,7 +296,7 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         colors={colors}
         hint="Negativo = izquierda, Positivo = derecha"
       />
-      <Slider
+      <SliderWithInput
         label="Espacio entre lineas"
         value={pos.nameLineSpacing ?? defaults.nameLineSpacing}
         min={10} max={60} step={1}
@@ -298,7 +314,7 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         OFFSETS VERTICALES INDIVIDUALES
       </div>
 
-      <Slider
+      <SliderWithInput
         label='Offset etiqueta Y ("GANADOR")'
         value={pos.labelOffsetY ?? defaults.labelOffsetY}
         min={-40} max={40} step={1}
@@ -306,7 +322,7 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         colors={colors}
         hint="Posicion de la etiqueta respecto al bloque"
       />
-      <Slider
+      <SliderWithInput
         label="Offset nombre Y"
         value={pos.firstNameOffsetY ?? defaults.firstNameOffsetY}
         min={-20} max={60} step={1}
@@ -314,7 +330,7 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         colors={colors}
         hint="Posicion de la primera linea del nombre"
       />
-      <Slider
+      <SliderWithInput
         label="Offset arquetipo Y"
         value={pos.archetypeOffsetY ?? defaults.archetypeOffsetY}
         min={20} max={120} step={1}
@@ -322,6 +338,155 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
         colors={colors}
         hint="Posicion del nombre del mazo"
       />
+
+      {/* LINEAS DECORATIVAS */}
+      <div style={{
+        color: withAlpha(colors.primary, 0.4),
+        fontSize: 9, letterSpacing: 1, textAlign: "center",
+        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
+        paddingBottom: 8, marginTop: 4,
+      }}>
+        LINEAS DECORATIVAS
+      </div>
+
+      <SliderWithInput
+        label="Linea izq. — inicio X"
+        value={pos.lineLeftX ?? defaults.lineLeftX}
+        min={0} max={200} step={1}
+        onChange={update("lineLeftX")}
+        colors={colors}
+      />
+      <SliderWithInput
+        label="Linea izq. — largo"
+        value={pos.lineLeftLen ?? defaults.lineLeftLen}
+        min={0} max={200} step={1}
+        onChange={update("lineLeftLen")}
+        colors={colors}
+      />
+      <SliderWithInput
+        label="Linea der. — inicio X"
+        value={pos.lineRightX ?? defaults.lineRightX}
+        min={0} max={400} step={1}
+        onChange={update("lineRightX")}
+        colors={colors}
+      />
+      <SliderWithInput
+        label="Linea der. — largo"
+        value={pos.lineRightLen ?? defaults.lineRightLen}
+        min={0} max={200} step={1}
+        onChange={update("lineRightLen")}
+        colors={colors}
+      />
+
+      {/* TIPOGRAFIA */}
+      <div style={{
+        color: withAlpha(colors.primary, 0.4),
+        fontSize: 9, letterSpacing: 1, textAlign: "center",
+        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
+        paddingBottom: 8, marginTop: 4,
+      }}>
+        TIPOGRAFIA DEL NOMBRE
+      </div>
+
+      <SliderWithInput
+        label="Tamano de fuente"
+        value={pos.nameFontSize ?? defaults.nameFontSize}
+        min={10} max={60} step={1}
+        onChange={update("nameFontSize")}
+        colors={colors}
+        hint="Tamano en pixeles del nombre del ganador"
+      />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <label style={{
+          color: withAlpha(colors.primary, 0.5),
+          fontSize: 9, letterSpacing: 1, textTransform: "uppercase", flex: 1,
+        }}>
+          Negrita
+        </label>
+        <input
+          type="checkbox"
+          checked={pos.nameBold ?? defaults.nameBold}
+          onChange={update("nameBold")}
+          style={{ accentColor: colors.primary, width: 16, height: 16 }}
+        />
+      </div>
+
+      {/* LOGO DE TIENDA */}
+      <div style={{
+        color: withAlpha(colors.primary, 0.4),
+        fontSize: 9, letterSpacing: 1, textAlign: "center",
+        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
+        paddingBottom: 8, marginTop: 4,
+      }}>
+        LOGO DE TIENDA
+      </div>
+
+      <div
+        style={{
+          border: `1px dashed ${withAlpha(colors.primary, 0.3)}`,
+          borderRadius: 2,
+          padding: logoImg ? 6 : "12px",
+          textAlign: "center",
+          cursor: "pointer",
+          position: "relative",
+        }}
+        onClick={() => document.getElementById("logoInput").click()}
+      >
+        {logoImg
+          ? <img src={logoImg.src} alt="logo" style={{ maxWidth: "100%", maxHeight: 60, objectFit: "contain" }} />
+          : <div style={{ color: withAlpha(colors.primary, 0.4), fontSize: 10, letterSpacing: 1 }}>
+              Click para subir logo
+            </div>
+        }
+      </div>
+      <input id="logoInput" type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoFile} />
+
+      {logoImg && <>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["top-left", "top-right", "bottom-left", "bottom-right"].map(corner => (
+            <button
+              key={corner}
+              onClick={() => set("_pos")({ target: { value: { ...pos, logoCorner: corner } } })}
+              style={{
+                flex: 1, padding: "5px 2px",
+                background: (pos.logoCorner ?? defaults.logoCorner) === corner
+                  ? withAlpha(colors.primary, 0.2) : withAlpha(colors.primary, 0.05),
+                border: (pos.logoCorner ?? defaults.logoCorner) === corner
+                  ? `1px solid ${withAlpha(colors.primary, 0.5)}`
+                  : `1px solid ${withAlpha(colors.primary, 0.15)}`,
+                color: (pos.logoCorner ?? defaults.logoCorner) === corner
+                  ? colors.primary : withAlpha(colors.primary, 0.4),
+                fontSize: 7, letterSpacing: 0.5, textTransform: "uppercase",
+                cursor: "pointer",
+              }}
+            >
+              {corner.replace("-", " ")}
+            </button>
+          ))}
+        </div>
+        <SliderWithInput
+          label="Tamano del logo"
+          value={pos.logoSize ?? defaults.logoSize}
+          min={20} max={200} step={1}
+          onChange={update("logoSize")}
+          colors={colors}
+        />
+        <SliderWithInput
+          label="Logo offset X"
+          value={pos.logoX ?? defaults.logoX}
+          min={0} max={200} step={1}
+          onChange={update("logoX")}
+          colors={colors}
+        />
+        <SliderWithInput
+          label="Logo offset Y"
+          value={pos.logoY ?? defaults.logoY}
+          min={0} max={200} step={1}
+          onChange={update("logoY")}
+          colors={colors}
+        />
+      </>}
 
       <button onClick={reset} style={{
         marginTop: 8,
@@ -338,7 +503,14 @@ function PositionEditor({ data, set, colors, layoutConfig }) {
   );
 }
 
-function Slider({ label, value, min, max, step, onChange, colors, hint }) {
+function SliderWithInput({ label, value, min, max, step, onChange, colors, hint }) {
+  const handleNumberChange = (e) => {
+    const num = parseFloat(e.target.value);
+    if (!isNaN(num)) {
+      onChange({ target: { value: String(Math.min(max, Math.max(min, num))), type: "range" } });
+    }
+  };
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
@@ -348,12 +520,23 @@ function Slider({ label, value, min, max, step, onChange, colors, hint }) {
         }}>
           {label}
         </label>
-        <span style={{
-          color: colors.primary,
-          fontSize: 11, fontFamily: "monospace", fontWeight: 700,
-        }}>
-          {value}
-        </span>
+        <input
+          type="number"
+          value={value}
+          min={min} max={max} step={step}
+          onChange={handleNumberChange}
+          style={{
+            width: 52,
+            background: withAlpha(colors.primary, 0.08),
+            border: `1px solid ${withAlpha(colors.primary, 0.25)}`,
+            color: colors.primary,
+            fontSize: 11, fontFamily: "monospace", fontWeight: 700,
+            textAlign: "center", padding: "2px 4px",
+            outline: "none", boxSizing: "border-box",
+          }}
+          onFocus={e => e.target.style.borderColor = withAlpha(colors.primary, 0.5)}
+          onBlur={e => e.target.style.borderColor = withAlpha(colors.primary, 0.25)}
+        />
       </div>
       {hint && <div style={{ color: withAlpha(colors.primary, 0.25), fontSize: 8, marginBottom: 3 }}>{hint}</div>}
       <input

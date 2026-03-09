@@ -13,7 +13,7 @@ import { parseDeck } from "./deckParser.js";
  * @param {Image|null} photoImg - Imagen cargada del jugador
  * @param {Object} gameConfig - Configuracion completa del juego (theme, deckStructure, etc.)
  */
-export function renderCanvas(canvas, data, photoImg, gameConfig) {
+export function renderCanvas(canvas, data, photoImg, gameConfig, logoImg) {
   const { theme, deckStructure } = gameConfig;
   const { colors, typography: typo, layout, decorations: deco } = theme;
 
@@ -172,11 +172,16 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
 
   ctx.textAlign = "center";
 
-  // Lineas decorativas horizontales a los costados de la etiqueta
+  // Lineas decorativas horizontales a los costados de la etiqueta (configurables)
+  const lineLeftX   = pos.lineLeftX ?? 18;
+  const lineLeftLen = pos.lineLeftLen ?? 40;
+  const lineRightX  = pos.lineRightX ?? 172;
+  const lineRightLen = pos.lineRightLen ?? 50;
+
   ctx.strokeStyle = withAlpha(colors.primary, 0.45);
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(18, nameY + 2); ctx.lineTo(58, nameY + 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(172, nameY + 2); ctx.lineTo(222, nameY + 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lineLeftX, nameY + 2); ctx.lineTo(lineLeftX + lineLeftLen, nameY + 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lineRightX, nameY + 2); ctx.lineTo(lineRightX + lineRightLen, nameY + 2); ctx.stroke();
 
   // Etiqueta superior: "GANADOR", "WANTED", "CAMPEON" (segun el juego)
   ctx.fillStyle = typo.winnerLabel.color;
@@ -184,8 +189,19 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
   ctx.fillText(deco.winnerLabel, nameCX, nameY + labelOffsetY);
 
   // Nombre del ganador (dos lineas: firstName + lastName)
+  // Soporte para tamano de fuente y negrita configurables
+  const nameFontSize = pos.nameFontSize ?? 23;
+  const nameBold = pos.nameBold ?? false;
+  const baseFontStr = typo.winnerName.font;
+  // Reemplazar tamano de fuente en el string de font
+  const customFont = baseFontStr.replace(/\d+px/, `${nameFontSize}px`);
+  // Aplicar negrita si esta activado (forzar weight 900)
+  const finalFont = nameBold
+    ? customFont.replace(/^\d+\s/, "900 ").replace(/^(normal|bold|[1-9]00)\s/, "900 ")
+    : customFont;
+
   ctx.fillStyle = typo.winnerName.color;
-  ctx.font = typo.winnerName.font;
+  ctx.font = finalFont;
   ctx.fillText(data.firstName, nameCX, nameY + firstNameOffY);
   ctx.fillText(data.lastName, nameCX, nameY + firstNameOffY + nameLineSpace);
 
@@ -316,6 +332,27 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
   ctx.font = typo.footer.font;
   ctx.fillStyle = typo.footer.color;
   ctx.fillText(data.website, W - 22, fy + 22);
+
+  // ── Logo de tienda ────────────────────────────────────────────
+  if (logoImg) {
+    const logoSize   = pos.logoSize ?? 60;
+    const logoOffX   = pos.logoX ?? 10;
+    const logoOffY   = pos.logoY ?? 10;
+    const logoCorner = pos.logoCorner ?? "top-left";
+
+    // Mantener proporcion del logo
+    const logoAspect = logoImg.naturalWidth / logoImg.naturalHeight;
+    const lw = logoSize;
+    const lh = logoSize / logoAspect;
+
+    let lx, ly;
+    if (logoCorner === "top-left")     { lx = logoOffX; ly = logoOffY; }
+    else if (logoCorner === "top-right")    { lx = W - lw - logoOffX; ly = logoOffY; }
+    else if (logoCorner === "bottom-left")  { lx = logoOffX; ly = H - lh - logoOffY; }
+    else /* bottom-right */                 { lx = W - lw - logoOffX; ly = H - lh - logoOffY; }
+
+    ctx.drawImage(logoImg, lx, ly, lw, lh);
+  }
 
   // ── Border ──────────────────────────────────────────────────
   ctx.strokeStyle = deco.borderColor;

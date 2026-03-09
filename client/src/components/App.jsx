@@ -10,6 +10,7 @@ export default function App() {
   const [data, setData] = useState({});
   const [photoImg, setPhotoImg] = useState(null);
   const [photoUrl, setPhotoUrl] = useState(null);
+  const [logoImg, setLogoImg] = useState(null);
   const [fontsReady, setFontsReady] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
   const [loading, setLoading] = useState(true);
@@ -57,8 +58,8 @@ export default function App() {
   // Re-render canvas
   useEffect(() => {
     if (!fontsReady || !canvasRef.current || !gameConfig) return;
-    renderCanvas(canvasRef.current, data, photoImg, gameConfig);
-  }, [data, photoImg, fontsReady, gameConfig]);
+    renderCanvas(canvasRef.current, data, photoImg, gameConfig, logoImg);
+  }, [data, photoImg, fontsReady, gameConfig, logoImg]);
 
   const set = (k) => (e) => setData(d => ({ ...d, [k]: e.target.value }));
 
@@ -120,6 +121,13 @@ export default function App() {
     const name = `ganador-${slug}-${data.lastName.toLowerCase().replace(/\s/g, "-")}-${data.fecha.toLowerCase().replace(/\s/g, "-")}-instagram.png`;
     a.download = name;
     a.click();
+  };
+
+  const handleLogoUpload = (file) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => setLogoImg(img);
+    img.src = url;
   };
 
   const handleGameChange = (slug) => {
@@ -205,6 +213,8 @@ export default function App() {
           deckStructure={gameConfig?.deckStructure}
           gameSlug={gameSlug}
           layoutConfig={gameConfig?.theme?.layout}
+          logoImg={logoImg}
+          onLogoUpload={handleLogoUpload}
         />
 
         {/* Canvas Preview */}
