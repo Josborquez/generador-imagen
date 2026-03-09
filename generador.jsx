@@ -130,7 +130,7 @@ function renderCanvas(canvas, data, photoImg) {
     ctx.fillText("DECKLIST", dx, dy + 12);
     ctx.textAlign = "right";
     ctx.fillStyle = "rgba(201,168,76,0.4)"; ctx.font = "700 9px 'Cinzel Decorative', serif";
-    ctx.fillText("60 / 15", W - 20, dy + 12);
+    ctx.fillText("60 / 15", col2x - 10, dy + 12);
     ctx.strokeStyle = "rgba(201,168,76,0.15)"; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(dx, dy + 18); ctx.lineTo(W - 18, dy + 18); ctx.stroke();
 
@@ -167,13 +167,14 @@ function renderCanvas(canvas, data, photoImg) {
     y2 += 12;
     for (const [q, n] of parseDeck(data.sideboard)) y2 = cardLine(col2x, y2, q, n, BLUE);
 
-    // ── trophy
-    const tglow = ctx.createRadialGradient(W - 52, 100, 0, W - 52, 100, 50);
-    tglow.addColorStop(0, "rgba(201,168,76,0.25)"); tglow.addColorStop(1, "transparent");
-    ctx.fillStyle = tglow; ctx.fillRect(W - 102, 60, 100, 90);
-    ctx.font = "40px serif"; ctx.textAlign = "center"; ctx.fillText("🏆", W - 52, 110);
-    ctx.fillStyle = GOLD; ctx.font = "600 7.5px 'Cinzel', serif";
-    ctx.fillText(data.fecha, W - 52, 124);
+    // ── trophy — positioned below deck header to avoid overlap with "60/15"
+    const trophyX = W - 48, trophyY = HEADER_H + 48;
+    const tglow = ctx.createRadialGradient(trophyX, trophyY, 0, trophyX, trophyY, 40);
+    tglow.addColorStop(0, "rgba(201,168,76,0.18)"); tglow.addColorStop(1, "transparent");
+    ctx.fillStyle = tglow; ctx.fillRect(trophyX - 40, trophyY - 30, 80, 70);
+    ctx.font = "28px serif"; ctx.textAlign = "center"; ctx.fillText("🏆", trophyX, trophyY + 6);
+    ctx.fillStyle = GOLD; ctx.font = "600 7px 'Cinzel', serif";
+    ctx.fillText(data.fecha, trophyX, trophyY + 18);
 
     // ── footer
     const fy = H - FOOTER_H;
