@@ -204,8 +204,6 @@ export default function App() {
           themeColors={themeColors}
           deckStructure={gameConfig?.deckStructure}
           gameSlug={gameSlug}
-          layout={gameConfig?.theme?.layout}
-          onPositionsChange={(positions) => setData(d => ({ ...d, positions }))}
         />
 
         {/* Canvas Preview */}
