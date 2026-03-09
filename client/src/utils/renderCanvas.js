@@ -138,72 +138,27 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
   }
 
   // ── Winner Name ─────────────────────────────────────────────
-  // Este bloque renderiza el nombre del ganador, el label "GANADOR" y el arquetipo.
-  // Todas las posiciones se pueden ajustar desde el editor de posiciones (data.positions).
-  //
-  // Estructura visual (de arriba a abajo):
-  //   ─── linea decorativa izq ───   ─── linea decorativa der ───
-  //                    GANADOR              <- winnerLabel
-  //                 CARLOS                  <- firstName (winnerName)
-  //                 IGLESIAS                <- lastName  (winnerName)
-  //                 BLACK PONZA             <- archetype
-  //
-  // Coordenadas base:
-  //   nameY = borde inferior - footer - offsetFromBottom
-  //   centerX = mitad del area de foto (PHOTO_W / 2) + ajuste horizontal
-  // ──────────────────────────────────────────────────────────────
-
-  // Posiciones personalizables desde el editor (con valores por defecto)
-  const pos = data.positions || {};
-
-  // nameY: posicion vertical base de referencia para todo el bloque del nombre
-  // Se calcula desde el borde inferior del canvas, restando el footer y un offset configurable
-  const nameOffsetFromBottom = pos.nameOffsetFromBottom ?? layout.name.offsetFromBottom; // default ~55
-  const nameY = H - FOOTER_H - nameOffsetFromBottom;
-
-  // centerX: posicion horizontal central para el texto del nombre
-  // PHOTO_W / 2 centra en el area de la foto, luego se ajusta con nameX (default -30)
-  const nameCenterX = pos.nameCenterX ?? (PHOTO_W / 2 - 30);
-
+  const nameY = H - FOOTER_H - layout.name.offsetFromBottom;
   ctx.textAlign = "center";
 
-  // ── Lineas decorativas horizontales a los lados del label ──
-  // Linea izquierda: desde x=18 hasta x=58, a la altura nameY + 2
-  const decoLineY = pos.decoLineY ?? (nameY + 2);
-  const decoLineLeftStart = pos.decoLineLeftStart ?? 18;
-  const decoLineLeftEnd = pos.decoLineLeftEnd ?? 58;
-  const decoLineRightStart = pos.decoLineRightStart ?? 172;
-  const decoLineRightEnd = pos.decoLineRightEnd ?? 222;
-
+  // Decorative lines around name
   ctx.strokeStyle = withAlpha(colors.primary, 0.45);
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(decoLineLeftStart, decoLineY); ctx.lineTo(decoLineLeftEnd, decoLineY); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(decoLineRightStart, decoLineY); ctx.lineTo(decoLineRightEnd, decoLineY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(18, nameY + 2); ctx.lineTo(58, nameY + 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(172, nameY + 2); ctx.lineTo(222, nameY + 2); ctx.stroke();
 
-  // ── Label "GANADOR" (o "WANTED", "CAMPEON" segun el juego) ──
-  // Se posiciona ligeramente arriba del nombre (nameY - 4 por defecto)
-  const labelOffsetY = pos.labelOffsetY ?? -4; // offset vertical respecto a nameY
   ctx.fillStyle = typo.winnerLabel.color;
   ctx.font = typo.winnerLabel.font;
-  ctx.fillText(deco.winnerLabel, nameCenterX, nameY + labelOffsetY);
-
-  // ── Nombre del ganador (firstName + lastName) ──
-  // firstName se posiciona en nameY + 12 por defecto
-  // lastName se posiciona debajo, separado por lineSpacing (default ~26px)
-  const nameFirstY = pos.nameFirstY ?? 12;  // offset vertical del firstName respecto a nameY
-  const nameLineSpacing = pos.nameLineSpacing ?? layout.name.lineSpacing; // espacio entre firstName y lastName
+  ctx.fillText(deco.winnerLabel, PHOTO_W / 2 - 30, nameY - 4);
 
   ctx.fillStyle = typo.winnerName.color;
   ctx.font = typo.winnerName.font;
-  ctx.fillText(data.firstName, nameCenterX, nameY + nameFirstY);
-  ctx.fillText(data.lastName, nameCenterX, nameY + nameFirstY + nameLineSpacing);
+  ctx.fillText(data.firstName, PHOTO_W / 2 - 30, nameY + 12);
+  ctx.fillText(data.lastName, PHOTO_W / 2 - 30, nameY + 12 + layout.name.lineSpacing);
 
-  // ── Arquetipo / Nombre del mazo ──
-  // Se posiciona debajo del lastName (nameY + 55 por defecto)
-  const archetypeOffsetY = pos.archetypeOffsetY ?? 55; // offset vertical respecto a nameY
   ctx.fillStyle = typo.archetype.color;
   ctx.font = typo.archetype.font;
-  ctx.fillText(data.archetype, nameCenterX, nameY + archetypeOffsetY);
+  ctx.fillText(data.archetype, PHOTO_W / 2 - 30, nameY + 55);
 
   // ── Deck Area ───────────────────────────────────────────────
   const dx = PHOTO_W + 4;
