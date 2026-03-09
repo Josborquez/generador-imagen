@@ -194,9 +194,10 @@ export default function App() {
         display: "flex",
         gap: 28,
         width: "100%",
-        maxWidth: 1200,
+        maxWidth: 1300,
         flexWrap: "wrap",
         justifyContent: "center",
+        alignItems: "flex-start",
       }}>
         {/* Form Panel */}
         <FormPanel
