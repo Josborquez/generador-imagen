@@ -9,10 +9,10 @@
 export default function FormPanel({
   data, set, activeTab, setActiveTab,
   photoUrl, handlePhoto, handleDrop, download, downloadInstagram,
-  themeColors, deckStructure, gameSlug,
+  themeColors, deckStructure, gameSlug, layoutConfig,
 }) {
-  const tabs = ["info", "evento", "mazo"];
-  const tabLabels = { info: "Ganador", evento: "Evento", mazo: "Mazo" };
+  const tabs = ["info", "evento", "mazo", "posicion"];
+  const tabLabels = { info: "Ganador", evento: "Evento", mazo: "Mazo", posicion: "Posicion" };
 
   return (
     <div style={{
@@ -114,6 +114,11 @@ export default function FormPanel({
             />
           ))}
         </>}
+
+        {/* POSICION TAB — editor manual de posicionamiento */}
+        {activeTab === "posicion" && <>
+          <PositionEditor data={data} set={set} colors={themeColors} layoutConfig={layoutConfig} />
+        </>}
       </div>
 
       {/* Download buttons */}
@@ -207,6 +212,160 @@ function TextArea({ label, value, onChange, rows, hint, colors }) {
         }}
         onFocus={e => e.target.style.borderColor = withAlpha(colors.primary, 0.4)}
         onBlur={e => e.target.style.borderColor = withAlpha(colors.primary, 0.15)}
+      />
+    </div>
+  );
+}
+
+/**
+ * PositionEditor — Editor visual para ajustar posicionamiento
+ * del nombre del ganador y el nombre del decklist (arquetipo).
+ *
+ * Los valores se guardan en data._pos y son leidos por renderCanvas
+ * como sobreescrituras de los valores por defecto del tema.
+ *
+ * Controles disponibles:
+ *   - Offset desde abajo: distancia vertical del bloque completo desde el footer
+ *   - Desplazamiento X: mueve el bloque horizontalmente (negativo = izquierda)
+ *   - Espacio entre lineas: separacion entre firstName y lastName
+ *   - Offset etiqueta Y: posicion vertical de "GANADOR"/"WANTED"/"CAMPEON"
+ *   - Offset nombre Y: posicion vertical de la primera linea del nombre
+ *   - Offset arquetipo Y: posicion vertical del nombre del mazo
+ */
+function PositionEditor({ data, set, colors, layoutConfig }) {
+  const pos = data._pos || {};
+  // Valores por defecto del tema actual (se usan como fallback)
+  const defaults = {
+    nameOffsetFromBottom: layoutConfig?.name?.offsetFromBottom ?? 55,
+    nameXShift: -30,
+    nameLineSpacing: layoutConfig?.name?.lineSpacing ?? 26,
+    labelOffsetY: -4,
+    firstNameOffsetY: 12,
+    archetypeOffsetY: 55,
+  };
+
+  const update = (key) => (e) => {
+    const val = parseFloat(e.target.value);
+    set("_pos")({ target: { value: { ...pos, [key]: val } } });
+  };
+
+  const reset = () => {
+    set("_pos")({ target: { value: {} } });
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{
+        color: withAlpha(colors.primary, 0.4),
+        fontSize: 9, letterSpacing: 1, textAlign: "center",
+        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
+        paddingBottom: 8,
+      }}>
+        POSICION DEL NOMBRE DEL GANADOR
+      </div>
+
+      <Slider
+        label="Offset desde abajo"
+        value={pos.nameOffsetFromBottom ?? defaults.nameOffsetFromBottom}
+        min={0} max={200} step={1}
+        onChange={update("nameOffsetFromBottom")}
+        colors={colors}
+        hint="Distancia vertical desde el footer"
+      />
+      <Slider
+        label="Desplazamiento X"
+        value={pos.nameXShift ?? defaults.nameXShift}
+        min={-150} max={150} step={1}
+        onChange={update("nameXShift")}
+        colors={colors}
+        hint="Negativo = izquierda, Positivo = derecha"
+      />
+      <Slider
+        label="Espacio entre lineas"
+        value={pos.nameLineSpacing ?? defaults.nameLineSpacing}
+        min={10} max={60} step={1}
+        onChange={update("nameLineSpacing")}
+        colors={colors}
+        hint="Separacion entre nombre y apellido"
+      />
+
+      <div style={{
+        color: withAlpha(colors.primary, 0.4),
+        fontSize: 9, letterSpacing: 1, textAlign: "center",
+        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
+        paddingBottom: 8, marginTop: 4,
+      }}>
+        OFFSETS VERTICALES INDIVIDUALES
+      </div>
+
+      <Slider
+        label='Offset etiqueta Y ("GANADOR")'
+        value={pos.labelOffsetY ?? defaults.labelOffsetY}
+        min={-40} max={40} step={1}
+        onChange={update("labelOffsetY")}
+        colors={colors}
+        hint="Posicion de la etiqueta respecto al bloque"
+      />
+      <Slider
+        label="Offset nombre Y"
+        value={pos.firstNameOffsetY ?? defaults.firstNameOffsetY}
+        min={-20} max={60} step={1}
+        onChange={update("firstNameOffsetY")}
+        colors={colors}
+        hint="Posicion de la primera linea del nombre"
+      />
+      <Slider
+        label="Offset arquetipo Y"
+        value={pos.archetypeOffsetY ?? defaults.archetypeOffsetY}
+        min={20} max={120} step={1}
+        onChange={update("archetypeOffsetY")}
+        colors={colors}
+        hint="Posicion del nombre del mazo"
+      />
+
+      <button onClick={reset} style={{
+        marginTop: 8,
+        padding: "8px 0",
+        background: withAlpha(colors.primary, 0.08),
+        border: `1px solid ${withAlpha(colors.primary, 0.2)}`,
+        color: withAlpha(colors.primary, 0.6),
+        fontSize: 9, letterSpacing: 2, textTransform: "uppercase",
+        cursor: "pointer",
+      }}>
+        Restaurar valores por defecto
+      </button>
+    </div>
+  );
+}
+
+function Slider({ label, value, min, max, step, onChange, colors, hint }) {
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+        <label style={{
+          color: withAlpha(colors.primary, 0.5),
+          fontSize: 9, letterSpacing: 1, textTransform: "uppercase",
+        }}>
+          {label}
+        </label>
+        <span style={{
+          color: colors.primary,
+          fontSize: 11, fontFamily: "monospace", fontWeight: 700,
+        }}>
+          {value}
+        </span>
+      </div>
+      {hint && <div style={{ color: withAlpha(colors.primary, 0.25), fontSize: 8, marginBottom: 3 }}>{hint}</div>}
+      <input
+        type="range"
+        min={min} max={max} step={step}
+        value={value}
+        onChange={onChange}
+        style={{
+          width: "100%",
+          accentColor: colors.primary,
+          height: 4,
+        }}
       />
     </div>
   );

@@ -204,6 +204,7 @@ export default function App() {
           themeColors={themeColors}
           deckStructure={gameConfig?.deckStructure}
           gameSlug={gameSlug}
+          layoutConfig={gameConfig?.theme?.layout}
         />
 
         {/* Canvas Preview */}

@@ -138,27 +138,61 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
   }
 
   // ── Winner Name ─────────────────────────────────────────────
-  const nameY = H - FOOTER_H - layout.name.offsetFromBottom;
+  // Posicionamiento del bloque del ganador (nombre + arquetipo).
+  // Se calcula desde el borde inferior del canvas, restando el footer
+  // y un offset configurable. Los valores se pueden sobreescribir
+  // desde el editor de posicion (data._pos) para ajuste manual.
+  //
+  // Valores por defecto del tema:
+  //   layout.name.offsetFromBottom -> distancia desde el borde inferior (sin footer) hacia arriba
+  //   layout.name.lineSpacing     -> separacion vertical entre firstName y lastName
+  //
+  // Estructura vertical del bloque (desde nameY hacia abajo):
+  //   nameY - 4    -> etiqueta "GANADOR" / "WANTED" / "CAMPEON"
+  //   nameY + 12   -> primera linea del nombre (firstName)
+  //   nameY + 12 + lineSpacing -> segunda linea del nombre (lastName)
+  //   nameY + 55   -> arquetipo / nombre del mazo (ej: "BLACK PONZA")
+  //
+  // Eje X: centrado en el area de la foto (PHOTO_W / 2) con un
+  //   desplazamiento horizontal (nameXShift) para compensacion visual.
+
+  // -- Leer sobreescrituras del editor de posicion (si existen) --
+  const pos = data._pos || {};
+  const nameOffBottom = pos.nameOffsetFromBottom ?? layout.name.offsetFromBottom;
+  const nameXShift    = pos.nameXShift ?? -30;           // desplazamiento horizontal desde el centro de la foto
+  const nameLineSpace = pos.nameLineSpacing ?? layout.name.lineSpacing;
+  const labelOffsetY  = pos.labelOffsetY ?? -4;          // offset Y de la etiqueta "GANADOR" respecto a nameY
+  const firstNameOffY = pos.firstNameOffsetY ?? 12;      // offset Y del firstName respecto a nameY
+  const archOffsetY   = pos.archetypeOffsetY ?? 55;      // offset Y del arquetipo respecto a nameY
+
+  // nameY: coordenada Y base para todo el bloque del ganador
+  const nameY = H - FOOTER_H - nameOffBottom;
+  // nameCX: coordenada X central del bloque del ganador
+  const nameCX = PHOTO_W / 2 + nameXShift;
+
   ctx.textAlign = "center";
 
-  // Decorative lines around name
+  // Lineas decorativas horizontales a los costados de la etiqueta
   ctx.strokeStyle = withAlpha(colors.primary, 0.45);
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(18, nameY + 2); ctx.lineTo(58, nameY + 2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(172, nameY + 2); ctx.lineTo(222, nameY + 2); ctx.stroke();
 
+  // Etiqueta superior: "GANADOR", "WANTED", "CAMPEON" (segun el juego)
   ctx.fillStyle = typo.winnerLabel.color;
   ctx.font = typo.winnerLabel.font;
-  ctx.fillText(deco.winnerLabel, PHOTO_W / 2 - 30, nameY - 4);
+  ctx.fillText(deco.winnerLabel, nameCX, nameY + labelOffsetY);
 
+  // Nombre del ganador (dos lineas: firstName + lastName)
   ctx.fillStyle = typo.winnerName.color;
   ctx.font = typo.winnerName.font;
-  ctx.fillText(data.firstName, PHOTO_W / 2 - 30, nameY + 12);
-  ctx.fillText(data.lastName, PHOTO_W / 2 - 30, nameY + 12 + layout.name.lineSpacing);
+  ctx.fillText(data.firstName, nameCX, nameY + firstNameOffY);
+  ctx.fillText(data.lastName, nameCX, nameY + firstNameOffY + nameLineSpace);
 
+  // Arquetipo / nombre del mazo (ej: "BLACK PONZA", "RED/GREEN LUFFY")
   ctx.fillStyle = typo.archetype.color;
   ctx.font = typo.archetype.font;
-  ctx.fillText(data.archetype, PHOTO_W / 2 - 30, nameY + 55);
+  ctx.fillText(data.archetype, nameCX, nameY + archOffsetY);
 
   // ── Deck Area ───────────────────────────────────────────────
   const dx = PHOTO_W + 4;
