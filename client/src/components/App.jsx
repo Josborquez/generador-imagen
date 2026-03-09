@@ -93,6 +93,35 @@ export default function App() {
     a.click();
   };
 
+  const downloadInstagram = () => {
+    if (!canvasRef.current || !gameConfig) return;
+    const IG_SIZE = 1080;
+    const igCanvas = document.createElement("canvas");
+    igCanvas.width = IG_SIZE;
+    igCanvas.height = IG_SIZE;
+    const igCtx = igCanvas.getContext("2d");
+
+    // Fill background
+    const bgColor = gameConfig.theme.colors.bg;
+    igCtx.fillStyle = bgColor;
+    igCtx.fillRect(0, 0, IG_SIZE, IG_SIZE);
+
+    // Scale original canvas to fit width, center vertically
+    const src = canvasRef.current;
+    const scale = IG_SIZE / src.width;
+    const scaledH = src.height * scale;
+    const offsetY = (IG_SIZE - scaledH) / 2;
+
+    igCtx.drawImage(src, 0, offsetY, IG_SIZE, scaledH);
+
+    const a = document.createElement("a");
+    a.href = igCanvas.toDataURL("image/png");
+    const slug = gameSlug.replace(/[^a-z0-9]/g, "-");
+    const name = `ganador-${slug}-${data.lastName.toLowerCase().replace(/\s/g, "-")}-${data.fecha.toLowerCase().replace(/\s/g, "-")}-instagram.png`;
+    a.download = name;
+    a.click();
+  };
+
   const handleGameChange = (slug) => {
     setGameSlug(slug);
     setPhotoImg(null);
@@ -171,6 +200,7 @@ export default function App() {
           handlePhoto={handlePhoto}
           handleDrop={handleDrop}
           download={download}
+          downloadInstagram={downloadInstagram}
           themeColors={themeColors}
           deckStructure={gameConfig?.deckStructure}
           gameSlug={gameSlug}
