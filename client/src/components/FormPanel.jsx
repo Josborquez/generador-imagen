@@ -1,10 +1,14 @@
 /**
- * FormPanel — Panel de formulario con pestanas (Ganador, Evento, Mazo)
+ * FormPanel — Panel de formulario con pestanas (Ganador, Evento, Mazo, Posicion)
  *
- * Se adapta dinamicamente al juego seleccionado:
- * - Los campos del mazo cambian segun deckStructure
- * - Los colores del panel siguen el tema activo
+ * Mejoras de usabilidad:
+ * - Secciones colapsables en la pestaña Posicion para reducir scroll
+ * - Botones de descarga siempre visibles (sticky)
+ * - Panel mas ancho para mejor legibilidad
+ * - Posicion tab organizada en acordeon
  */
+
+import { useState } from "react";
 
 export default function FormPanel({
   data, set, activeTab, setActiveTab,
@@ -14,17 +18,19 @@ export default function FormPanel({
 }) {
   const tabs = ["info", "evento", "mazo", "posicion"];
   const tabLabels = { info: "Ganador", evento: "Evento", mazo: "Mazo", posicion: "Posicion" };
+  const tabIcons = { info: "\u{1F464}", evento: "\u{1F3C6}", mazo: "\u{1F0CF}", posicion: "\u2699\uFE0F" };
 
   return (
     <div style={{
       background: withAlpha(themeColors.bg, 0.95),
       border: `1px solid ${withAlpha(themeColors.primary, 0.2)}`,
-      width: 340, minWidth: 300, flexShrink: 0,
+      width: 380, minWidth: 340, flexShrink: 0,
       display: "flex", flexDirection: "column",
       transition: "border-color 0.4s ease",
+      maxHeight: "85vh",
     }}>
       {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: `1px solid ${withAlpha(themeColors.primary, 0.15)}` }}>
+      <div style={{ display: "flex", borderBottom: `1px solid ${withAlpha(themeColors.primary, 0.15)}`, flexShrink: 0 }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setActiveTab(t)} style={{
             flex: 1, padding: "10px 0",
@@ -42,7 +48,11 @@ export default function FormPanel({
         ))}
       </div>
 
-      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
+      {/* Scrollable content */}
+      <div style={{
+        padding: 20, display: "flex", flexDirection: "column", gap: 14,
+        flex: 1, overflowY: "auto", minHeight: 0,
+      }}>
 
         {/* GANADOR TAB */}
         {activeTab === "info" && <>
@@ -65,7 +75,7 @@ export default function FormPanel({
             {photoUrl
               ? <img src={photoUrl} alt="preview" style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }} />
               : <>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>📷</div>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>{"\u{1F4F7}"}</div>
                 <div style={{ color: withAlpha(themeColors.primary, 0.5), fontSize: 11, letterSpacing: 1 }}>
                   Arrastra o haz click
                 </div>
@@ -116,14 +126,20 @@ export default function FormPanel({
           ))}
         </>}
 
-        {/* POSICION TAB — editor manual de posicionamiento */}
+        {/* POSICION TAB — editor con secciones colapsables */}
         {activeTab === "posicion" && <>
           <PositionEditor data={data} set={set} colors={themeColors} layoutConfig={layoutConfig} logoImg={logoImg} onLogoUpload={onLogoUpload} />
         </>}
       </div>
 
-      {/* Download buttons */}
-      <div style={{ margin: "0 20px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* Download buttons — sticky at bottom */}
+      <div style={{
+        padding: "12px 20px 16px",
+        display: "flex", flexDirection: "column", gap: 8,
+        borderTop: `1px solid ${withAlpha(themeColors.primary, 0.1)}`,
+        flexShrink: 0,
+        background: withAlpha(themeColors.bg, 0.98),
+      }}>
         <button onClick={download} style={{
           padding: "12px 0",
           background: `linear-gradient(135deg, ${withAlpha(themeColors.primary, 0.7)}, ${themeColors.primary})`,
@@ -219,19 +235,51 @@ function TextArea({ label, value, onChange, rows, hint, colors }) {
 }
 
 /**
- * PositionEditor — Editor visual para ajustar posicionamiento
- * del nombre del ganador y el nombre del decklist (arquetipo).
- *
- * Los valores se guardan en data._pos y son leidos por renderCanvas
- * como sobreescrituras de los valores por defecto del tema.
- *
- * Controles disponibles:
- *   - Offset desde abajo: distancia vertical del bloque completo desde el footer
- *   - Desplazamiento X: mueve el bloque horizontalmente (negativo = izquierda)
- *   - Espacio entre lineas: separacion entre firstName y lastName
- *   - Offset etiqueta Y: posicion vertical de "GANADOR"/"WANTED"/"CAMPEON"
- *   - Offset nombre Y: posicion vertical de la primera linea del nombre
- *   - Offset arquetipo Y: posicion vertical del nombre del mazo
+ * CollapsibleSection — Seccion colapsable con titulo clickeable
+ */
+function CollapsibleSection({ title, children, defaultOpen, colors }) {
+  const [open, setOpen] = useState(defaultOpen || false);
+
+  return (
+    <div style={{
+      border: `1px solid ${withAlpha(colors.primary, open ? 0.2 : 0.08)}`,
+      transition: "border-color 0.2s",
+    }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%",
+          padding: "8px 10px",
+          background: open ? withAlpha(colors.primary, 0.06) : withAlpha(colors.primary, 0.02),
+          border: "none",
+          color: open ? colors.primary : withAlpha(colors.primary, 0.5),
+          fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
+          cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          transition: "all 0.2s",
+        }}
+      >
+        <span>{title}</span>
+        <span style={{
+          fontSize: 10,
+          transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "transform 0.2s",
+          display: "inline-block",
+        }}>
+          {"\u25BC"}
+        </span>
+      </button>
+      {open && (
+        <div style={{ padding: "10px 10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * PositionEditor — Editor visual con secciones colapsables
  */
 function PositionEditor({ data, set, colors, layoutConfig, logoImg, onLogoUpload }) {
   const pos = data._pos || {};
@@ -270,226 +318,192 @@ function PositionEditor({ data, set, colors, layoutConfig, logoImg, onLogoUpload
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{
-        color: withAlpha(colors.primary, 0.4),
-        fontSize: 9, letterSpacing: 1, textAlign: "center",
-        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
-        paddingBottom: 8,
-      }}>
-        POSICION DEL NOMBRE DEL GANADOR
-      </div>
-
-      <SliderWithInput
-        label="Offset desde abajo"
-        value={pos.nameOffsetFromBottom ?? defaults.nameOffsetFromBottom}
-        min={0} max={200} step={1}
-        onChange={update("nameOffsetFromBottom")}
-        colors={colors}
-        hint="Distancia vertical desde el footer"
-      />
-      <SliderWithInput
-        label="Desplazamiento X"
-        value={pos.nameXShift ?? defaults.nameXShift}
-        min={-150} max={150} step={1}
-        onChange={update("nameXShift")}
-        colors={colors}
-        hint="Negativo = izquierda, Positivo = derecha"
-      />
-      <SliderWithInput
-        label="Espacio entre lineas"
-        value={pos.nameLineSpacing ?? defaults.nameLineSpacing}
-        min={10} max={60} step={1}
-        onChange={update("nameLineSpacing")}
-        colors={colors}
-        hint="Separacion entre nombre y apellido"
-      />
-
-      <div style={{
-        color: withAlpha(colors.primary, 0.4),
-        fontSize: 9, letterSpacing: 1, textAlign: "center",
-        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
-        paddingBottom: 8, marginTop: 4,
-      }}>
-        OFFSETS VERTICALES INDIVIDUALES
-      </div>
-
-      <SliderWithInput
-        label='Offset etiqueta Y ("GANADOR")'
-        value={pos.labelOffsetY ?? defaults.labelOffsetY}
-        min={-40} max={40} step={1}
-        onChange={update("labelOffsetY")}
-        colors={colors}
-        hint="Posicion de la etiqueta respecto al bloque"
-      />
-      <SliderWithInput
-        label="Offset nombre Y"
-        value={pos.firstNameOffsetY ?? defaults.firstNameOffsetY}
-        min={-20} max={60} step={1}
-        onChange={update("firstNameOffsetY")}
-        colors={colors}
-        hint="Posicion de la primera linea del nombre"
-      />
-      <SliderWithInput
-        label="Offset arquetipo Y"
-        value={pos.archetypeOffsetY ?? defaults.archetypeOffsetY}
-        min={20} max={120} step={1}
-        onChange={update("archetypeOffsetY")}
-        colors={colors}
-        hint="Posicion del nombre del mazo"
-      />
-
-      {/* LINEAS DECORATIVAS */}
-      <div style={{
-        color: withAlpha(colors.primary, 0.4),
-        fontSize: 9, letterSpacing: 1, textAlign: "center",
-        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
-        paddingBottom: 8, marginTop: 4,
-      }}>
-        LINEAS DECORATIVAS
-      </div>
-
-      <SliderWithInput
-        label="Linea izq. — inicio X"
-        value={pos.lineLeftX ?? defaults.lineLeftX}
-        min={0} max={200} step={1}
-        onChange={update("lineLeftX")}
-        colors={colors}
-      />
-      <SliderWithInput
-        label="Linea izq. — largo"
-        value={pos.lineLeftLen ?? defaults.lineLeftLen}
-        min={0} max={200} step={1}
-        onChange={update("lineLeftLen")}
-        colors={colors}
-      />
-      <SliderWithInput
-        label="Linea der. — inicio X"
-        value={pos.lineRightX ?? defaults.lineRightX}
-        min={0} max={400} step={1}
-        onChange={update("lineRightX")}
-        colors={colors}
-      />
-      <SliderWithInput
-        label="Linea der. — largo"
-        value={pos.lineRightLen ?? defaults.lineRightLen}
-        min={0} max={200} step={1}
-        onChange={update("lineRightLen")}
-        colors={colors}
-      />
-
-      {/* TIPOGRAFIA */}
-      <div style={{
-        color: withAlpha(colors.primary, 0.4),
-        fontSize: 9, letterSpacing: 1, textAlign: "center",
-        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
-        paddingBottom: 8, marginTop: 4,
-      }}>
-        TIPOGRAFIA DEL NOMBRE
-      </div>
-
-      <SliderWithInput
-        label="Tamano de fuente"
-        value={pos.nameFontSize ?? defaults.nameFontSize}
-        min={10} max={60} step={1}
-        onChange={update("nameFontSize")}
-        colors={colors}
-        hint="Tamano en pixeles del nombre del ganador"
-      />
-
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <label style={{
-          color: withAlpha(colors.primary, 0.5),
-          fontSize: 9, letterSpacing: 1, textTransform: "uppercase", flex: 1,
-        }}>
-          Negrita
-        </label>
-        <input
-          type="checkbox"
-          checked={pos.nameBold ?? defaults.nameBold}
-          onChange={update("nameBold")}
-          style={{ accentColor: colors.primary, width: 16, height: 16 }}
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* Posicion del nombre */}
+      <CollapsibleSection title="Posicion del nombre" defaultOpen={true} colors={colors}>
+        <SliderWithInput
+          label="Offset desde abajo"
+          value={pos.nameOffsetFromBottom ?? defaults.nameOffsetFromBottom}
+          min={0} max={200} step={1}
+          onChange={update("nameOffsetFromBottom")}
+          colors={colors}
+          hint="Distancia vertical desde el footer"
         />
-      </div>
+        <SliderWithInput
+          label="Desplazamiento X"
+          value={pos.nameXShift ?? defaults.nameXShift}
+          min={-150} max={150} step={1}
+          onChange={update("nameXShift")}
+          colors={colors}
+          hint="Negativo = izquierda, Positivo = derecha"
+        />
+        <SliderWithInput
+          label="Espacio entre lineas"
+          value={pos.nameLineSpacing ?? defaults.nameLineSpacing}
+          min={10} max={60} step={1}
+          onChange={update("nameLineSpacing")}
+          colors={colors}
+          hint="Separacion entre nombre y apellido"
+        />
+      </CollapsibleSection>
 
-      {/* LOGO DE TIENDA */}
-      <div style={{
-        color: withAlpha(colors.primary, 0.4),
-        fontSize: 9, letterSpacing: 1, textAlign: "center",
-        borderBottom: `1px solid ${withAlpha(colors.primary, 0.1)}`,
-        paddingBottom: 8, marginTop: 4,
-      }}>
-        LOGO DE TIENDA
-      </div>
+      {/* Offsets verticales */}
+      <CollapsibleSection title="Offsets verticales individuales" colors={colors}>
+        <SliderWithInput
+          label='Offset etiqueta Y ("GANADOR")'
+          value={pos.labelOffsetY ?? defaults.labelOffsetY}
+          min={-40} max={40} step={1}
+          onChange={update("labelOffsetY")}
+          colors={colors}
+          hint="Posicion de la etiqueta respecto al bloque"
+        />
+        <SliderWithInput
+          label="Offset nombre Y"
+          value={pos.firstNameOffsetY ?? defaults.firstNameOffsetY}
+          min={-20} max={60} step={1}
+          onChange={update("firstNameOffsetY")}
+          colors={colors}
+          hint="Posicion de la primera linea del nombre"
+        />
+        <SliderWithInput
+          label="Offset arquetipo Y"
+          value={pos.archetypeOffsetY ?? defaults.archetypeOffsetY}
+          min={20} max={120} step={1}
+          onChange={update("archetypeOffsetY")}
+          colors={colors}
+          hint="Posicion del nombre del mazo"
+        />
+      </CollapsibleSection>
 
-      <div
-        style={{
-          border: `1px dashed ${withAlpha(colors.primary, 0.3)}`,
-          borderRadius: 2,
-          padding: logoImg ? 6 : "12px",
-          textAlign: "center",
-          cursor: "pointer",
-          position: "relative",
-        }}
-        onClick={() => document.getElementById("logoInput").click()}
-      >
-        {logoImg
-          ? <img src={logoImg.src} alt="logo" style={{ maxWidth: "100%", maxHeight: 60, objectFit: "contain" }} />
-          : <div style={{ color: withAlpha(colors.primary, 0.4), fontSize: 10, letterSpacing: 1 }}>
-              Click para subir logo
-            </div>
-        }
-      </div>
-      <input id="logoInput" type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoFile} />
+      {/* Lineas decorativas */}
+      <CollapsibleSection title="Lineas decorativas" colors={colors}>
+        <SliderWithInput
+          label="Linea izq. — inicio X"
+          value={pos.lineLeftX ?? defaults.lineLeftX}
+          min={0} max={200} step={1}
+          onChange={update("lineLeftX")}
+          colors={colors}
+        />
+        <SliderWithInput
+          label="Linea izq. — largo"
+          value={pos.lineLeftLen ?? defaults.lineLeftLen}
+          min={0} max={200} step={1}
+          onChange={update("lineLeftLen")}
+          colors={colors}
+        />
+        <SliderWithInput
+          label="Linea der. — inicio X"
+          value={pos.lineRightX ?? defaults.lineRightX}
+          min={0} max={400} step={1}
+          onChange={update("lineRightX")}
+          colors={colors}
+        />
+        <SliderWithInput
+          label="Linea der. — largo"
+          value={pos.lineRightLen ?? defaults.lineRightLen}
+          min={0} max={200} step={1}
+          onChange={update("lineRightLen")}
+          colors={colors}
+        />
+      </CollapsibleSection>
 
-      {logoImg && <>
-        <div style={{ display: "flex", gap: 6 }}>
-          {["top-left", "top-right", "bottom-left", "bottom-right"].map(corner => (
-            <button
-              key={corner}
-              onClick={() => set("_pos")({ target: { value: { ...pos, logoCorner: corner } } })}
-              style={{
-                flex: 1, padding: "5px 2px",
-                background: (pos.logoCorner ?? defaults.logoCorner) === corner
-                  ? withAlpha(colors.primary, 0.2) : withAlpha(colors.primary, 0.05),
-                border: (pos.logoCorner ?? defaults.logoCorner) === corner
-                  ? `1px solid ${withAlpha(colors.primary, 0.5)}`
-                  : `1px solid ${withAlpha(colors.primary, 0.15)}`,
-                color: (pos.logoCorner ?? defaults.logoCorner) === corner
-                  ? colors.primary : withAlpha(colors.primary, 0.4),
-                fontSize: 7, letterSpacing: 0.5, textTransform: "uppercase",
-                cursor: "pointer",
-              }}
-            >
-              {corner.replace("-", " ")}
-            </button>
-          ))}
+      {/* Tipografia */}
+      <CollapsibleSection title="Tipografia del nombre" colors={colors}>
+        <SliderWithInput
+          label="Tamano de fuente"
+          value={pos.nameFontSize ?? defaults.nameFontSize}
+          min={10} max={60} step={1}
+          onChange={update("nameFontSize")}
+          colors={colors}
+          hint="Tamano en pixeles del nombre del ganador"
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <label style={{
+            color: withAlpha(colors.primary, 0.5),
+            fontSize: 9, letterSpacing: 1, textTransform: "uppercase", flex: 1,
+          }}>
+            Negrita
+          </label>
+          <input
+            type="checkbox"
+            checked={pos.nameBold ?? defaults.nameBold}
+            onChange={update("nameBold")}
+            style={{ accentColor: colors.primary, width: 16, height: 16 }}
+          />
         </div>
-        <SliderWithInput
-          label="Tamano del logo"
-          value={pos.logoSize ?? defaults.logoSize}
-          min={20} max={200} step={1}
-          onChange={update("logoSize")}
-          colors={colors}
-        />
-        <SliderWithInput
-          label="Logo offset X"
-          value={pos.logoX ?? defaults.logoX}
-          min={0} max={200} step={1}
-          onChange={update("logoX")}
-          colors={colors}
-        />
-        <SliderWithInput
-          label="Logo offset Y"
-          value={pos.logoY ?? defaults.logoY}
-          min={0} max={200} step={1}
-          onChange={update("logoY")}
-          colors={colors}
-        />
-      </>}
+      </CollapsibleSection>
+
+      {/* Logo de tienda */}
+      <CollapsibleSection title="Logo de tienda" colors={colors}>
+        <div
+          style={{
+            border: `1px dashed ${withAlpha(colors.primary, 0.3)}`,
+            borderRadius: 2,
+            padding: logoImg ? 6 : "12px",
+            textAlign: "center",
+            cursor: "pointer",
+            position: "relative",
+          }}
+          onClick={() => document.getElementById("logoInput").click()}
+        >
+          {logoImg
+            ? <img src={logoImg.src} alt="logo" style={{ maxWidth: "100%", maxHeight: 60, objectFit: "contain" }} />
+            : <div style={{ color: withAlpha(colors.primary, 0.4), fontSize: 10, letterSpacing: 1 }}>
+                Click para subir logo
+              </div>
+          }
+        </div>
+        <input id="logoInput" type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoFile} />
+
+        {logoImg && <>
+          <div style={{ display: "flex", gap: 6 }}>
+            {["top-left", "top-right", "bottom-left", "bottom-right"].map(corner => (
+              <button
+                key={corner}
+                onClick={() => set("_pos")({ target: { value: { ...pos, logoCorner: corner } } })}
+                style={{
+                  flex: 1, padding: "5px 2px",
+                  background: (pos.logoCorner ?? defaults.logoCorner) === corner
+                    ? withAlpha(colors.primary, 0.2) : withAlpha(colors.primary, 0.05),
+                  border: (pos.logoCorner ?? defaults.logoCorner) === corner
+                    ? `1px solid ${withAlpha(colors.primary, 0.5)}`
+                    : `1px solid ${withAlpha(colors.primary, 0.15)}`,
+                  color: (pos.logoCorner ?? defaults.logoCorner) === corner
+                    ? colors.primary : withAlpha(colors.primary, 0.4),
+                  fontSize: 7, letterSpacing: 0.5, textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                {corner.replace("-", " ")}
+              </button>
+            ))}
+          </div>
+          <SliderWithInput
+            label="Tamano del logo"
+            value={pos.logoSize ?? defaults.logoSize}
+            min={20} max={200} step={1}
+            onChange={update("logoSize")}
+            colors={colors}
+          />
+          <SliderWithInput
+            label="Logo offset X"
+            value={pos.logoX ?? defaults.logoX}
+            min={0} max={200} step={1}
+            onChange={update("logoX")}
+            colors={colors}
+          />
+          <SliderWithInput
+            label="Logo offset Y"
+            value={pos.logoY ?? defaults.logoY}
+            min={0} max={200} step={1}
+            onChange={update("logoY")}
+            colors={colors}
+          />
+        </>}
+      </CollapsibleSection>
 
       <button onClick={reset} style={{
-        marginTop: 8,
+        marginTop: 4,
         padding: "8px 0",
         background: withAlpha(colors.primary, 0.08),
         border: `1px solid ${withAlpha(colors.primary, 0.2)}`,
