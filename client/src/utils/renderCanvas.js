@@ -175,7 +175,7 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
   ctx.textAlign = "right";
   ctx.fillStyle = typo.deckCount.color;
   ctx.font = typo.deckCount.font;
-  ctx.fillText(deckStructure.totalDisplay, W - 20, dy + 12);
+  ctx.fillText(deckStructure.totalDisplay, col2x - 10, dy + 12);
 
   ctx.strokeStyle = deco.separatorColor;
   ctx.lineWidth = 1;
@@ -241,20 +241,22 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
     else y2 = yRef;
   }
 
-  // ── Trophy / Badge ──────────────────────────────────────────
-  const tglow = ctx.createRadialGradient(W - 52, 100, 0, W - 52, 100, 50);
-  tglow.addColorStop(0, withAlpha(colors.primary, 0.25));
+  // ── Trophy / Badge — positioned below deck header to avoid overlap
+  const trophyX = W - 48;
+  const trophyY = HEADER_H + 48;
+  const tglow = ctx.createRadialGradient(trophyX, trophyY, 0, trophyX, trophyY, 40);
+  tglow.addColorStop(0, withAlpha(colors.primary, 0.18));
   tglow.addColorStop(1, "transparent");
   ctx.fillStyle = tglow;
-  ctx.fillRect(W - 102, 60, 100, 90);
+  ctx.fillRect(trophyX - 40, trophyY - 30, 80, 70);
 
-  ctx.font = deco.trophySize;
+  ctx.font = deco.trophySize.replace(/\d+px/, "28px");
   ctx.textAlign = "center";
-  ctx.fillText(deco.trophyIcon, W - 52, 110);
+  ctx.fillText(deco.trophyIcon, trophyX, trophyY + 6);
 
   ctx.fillStyle = typo.trophyLabel.color;
   ctx.font = typo.trophyLabel.font;
-  ctx.fillText(data.fecha, W - 52, 124);
+  ctx.fillText(data.fecha, trophyX, trophyY + 18);
 
   // ── Footer ──────────────────────────────────────────────────
   const fy = H - FOOTER_H;

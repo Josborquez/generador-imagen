@@ -60,7 +60,7 @@ const games = {
       decorations: {
         headerIcon: "\u2694",  // swords
         trophyIcon: "\uD83C\uDFC6", // trophy
-        trophySize: "40px serif",
+        trophySize: "28px serif",
         borderColor: "rgba(201,168,76,0.35)",
         borderWidth: 1,
         cornerSize: 22,
