@@ -1,18 +1,21 @@
 /**
- * FormPanel — Panel de formulario con pestanas (Ganador, Evento, Mazo)
+ * FormPanel — Panel de formulario con pestanas (Ganador, Evento, Mazo, Posicion)
  *
  * Se adapta dinamicamente al juego seleccionado:
  * - Los campos del mazo cambian segun deckStructure
  * - Los colores del panel siguen el tema activo
+ * - La pestana "Posicion" permite ajustar posiciones del nombre/arquetipo
  */
+
+import PositionEditor from "./PositionEditor.jsx";
 
 export default function FormPanel({
   data, set, activeTab, setActiveTab,
   photoUrl, handlePhoto, handleDrop, download, downloadInstagram,
-  themeColors, deckStructure, gameSlug,
+  themeColors, deckStructure, gameSlug, layout, onPositionsChange,
 }) {
-  const tabs = ["info", "evento", "mazo"];
-  const tabLabels = { info: "Ganador", evento: "Evento", mazo: "Mazo" };
+  const tabs = ["info", "evento", "mazo", "posicion"];
+  const tabLabels = { info: "Ganador", evento: "Evento", mazo: "Mazo", posicion: "Posicion" };
 
   return (
     <div style={{
@@ -114,6 +117,16 @@ export default function FormPanel({
             />
           ))}
         </>}
+
+        {/* POSICION TAB — editor de posicionamiento del nombre y arquetipo */}
+        {activeTab === "posicion" && (
+          <PositionEditor
+            positions={data.positions || {}}
+            onChange={onPositionsChange}
+            themeColors={themeColors}
+            layout={layout}
+          />
+        )}
       </div>
 
       {/* Download buttons */}
