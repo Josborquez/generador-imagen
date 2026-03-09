@@ -118,13 +118,14 @@ export function renderCanvas(canvas, data, photoImg, gameConfig) {
   ctx.fillStyle = fadeR;
   ctx.fillRect(PHOTO_W - 90, HEADER_H, 90, PH);
 
-  // Bottom fade on photo
-  const fadeB = ctx.createLinearGradient(0, HEADER_H + PH - 130, 0, HEADER_H + PH);
+  // Bottom fade on photo — covers full photo width so name area is always dark
+  const fadeB = ctx.createLinearGradient(0, HEADER_H + PH - 180, 0, HEADER_H + PH);
   fadeB.addColorStop(0, "transparent");
-  fadeB.addColorStop(0.4, withAlpha(colors.bg, 0.85));
+  fadeB.addColorStop(0.35, withAlpha(colors.bg, 0.7));
+  fadeB.addColorStop(0.6, withAlpha(colors.bg, 0.92));
   fadeB.addColorStop(1, withAlpha(colors.bg, 0.99));
   ctx.fillStyle = fadeB;
-  ctx.fillRect(0, HEADER_H, PHOTO_W - 90, PH);
+  ctx.fillRect(0, HEADER_H, PHOTO_W, PH);
 
   // ── One Piece "Wanted" frame ────────────────────────────────
   if (deco.wantedFrame) {

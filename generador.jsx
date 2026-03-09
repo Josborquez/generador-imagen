@@ -97,12 +97,13 @@ function renderCanvas(canvas, data, photoImg) {
     fadeR.addColorStop(0, "transparent"); fadeR.addColorStop(1, BG);
     ctx.fillStyle = fadeR; ctx.fillRect(PHOTO_W - 90, HEADER_H, 90, PH);
 
-    // bottom fade
-    const fadeB = ctx.createLinearGradient(0, HEADER_H + PH - 130, 0, HEADER_H + PH);
+    // bottom fade — covers full photo width so name area is always dark
+    const fadeB = ctx.createLinearGradient(0, HEADER_H + PH - 180, 0, HEADER_H + PH);
     fadeB.addColorStop(0, "transparent");
-    fadeB.addColorStop(0.4, "rgba(10,10,15,0.85)");
+    fadeB.addColorStop(0.35, "rgba(10,10,15,0.7)");
+    fadeB.addColorStop(0.6, "rgba(10,10,15,0.92)");
     fadeB.addColorStop(1, "rgba(10,10,15,0.99)");
-    ctx.fillStyle = fadeB; ctx.fillRect(0, HEADER_H, PHOTO_W - 90, PH);
+    ctx.fillStyle = fadeB; ctx.fillRect(0, HEADER_H, PHOTO_W, PH);
 
     // ── name
     const nameY = H - FOOTER_H - 55;
@@ -253,6 +254,76 @@ export default function App() {
         a.click();
     };
 
+    const downloadInstagram = () => {
+        const src = canvasRef.current;
+        const IG = 1080;
+        const igCanvas = document.createElement("canvas");
+        igCanvas.width = IG;
+        igCanvas.height = IG;
+        const igCtx = igCanvas.getContext("2d");
+
+        // Fill background
+        igCtx.fillStyle = "#0A0A0F";
+        igCtx.fillRect(0, 0, IG, IG);
+
+        // Subtle radial glow behind the image
+        const glow = igCtx.createRadialGradient(IG / 2, IG / 2, 0, IG / 2, IG / 2, IG * 0.6);
+        glow.addColorStop(0, "rgba(201,168,76,0.06)");
+        glow.addColorStop(1, "transparent");
+        igCtx.fillStyle = glow;
+        igCtx.fillRect(0, 0, IG, IG);
+
+        // Scale the 900x560 canvas to fit 1080 width, centered vertically
+        const scale = IG / src.width;
+        const scaledH = src.height * scale;
+        const offsetY = (IG - scaledH) / 2;
+
+        igCtx.drawImage(src, 0, offsetY, IG, scaledH);
+
+        // Top and bottom vignette to fill the 1:1 letterbox
+        const topFade = igCtx.createLinearGradient(0, offsetY, 0, offsetY + 40);
+        topFade.addColorStop(0, "#0A0A0F");
+        topFade.addColorStop(1, "transparent");
+        igCtx.fillStyle = topFade;
+        igCtx.fillRect(0, 0, IG, offsetY + 40);
+
+        const btmFade = igCtx.createLinearGradient(0, offsetY + scaledH - 40, 0, offsetY + scaledH);
+        btmFade.addColorStop(0, "transparent");
+        btmFade.addColorStop(1, "#0A0A0F");
+        igCtx.fillStyle = btmFade;
+        igCtx.fillRect(0, offsetY + scaledH - 40, IG, IG - (offsetY + scaledH - 40));
+
+        // Thin gold border
+        igCtx.strokeStyle = "rgba(201,168,76,0.25)";
+        igCtx.lineWidth = 2;
+        igCtx.strokeRect(20, 20, IG - 40, IG - 40);
+
+        // Corner accents
+        const cs = 30;
+        igCtx.strokeStyle = "rgba(201,168,76,0.4)";
+        igCtx.lineWidth = 2;
+        [[28, 28, cs, cs], [IG - 28, 28, -cs, cs], [28, IG - 28, cs, -cs], [IG - 28, IG - 28, -cs, -cs]].forEach(([x, y, sx, sy]) => {
+            igCtx.beginPath(); igCtx.moveTo(x, y + sy); igCtx.lineTo(x, y); igCtx.lineTo(x + sx, y); igCtx.stroke();
+        });
+
+        // Season text on top bar
+        igCtx.textAlign = "center";
+        igCtx.fillStyle = "rgba(201,168,76,0.4)";
+        igCtx.font = "600 11px 'Cinzel', serif";
+        igCtx.fillText(data.season, IG / 2, offsetY - 16);
+
+        // Website text on bottom bar
+        igCtx.fillStyle = "rgba(201,168,76,0.3)";
+        igCtx.font = "600 10px 'Cinzel', serif";
+        igCtx.fillText(data.website, IG / 2, offsetY + scaledH + 28);
+
+        const a = document.createElement("a");
+        a.href = igCanvas.toDataURL("image/png");
+        const name = `ganador-ig-${data.lastName.toLowerCase().replace(/\s/g, "-")}-${data.fecha.toLowerCase().replace(/\s/g, "-")}.png`;
+        a.download = name;
+        a.click();
+    };
+
     const tabs = ["info", "evento", "mazo"];
 
     return (
@@ -371,24 +442,41 @@ export default function App() {
                         </>}
                     </div>
 
-                    {/* download button */}
-                    <button onClick={download} style={{
-                        margin: "0 20px 20px",
-                        padding: "12px 0",
-                        background: "linear-gradient(135deg, #8B6914, #C9A84C)",
-                        border: "none",
-                        color: "#0A0A0F",
-                        fontFamily: "'Cinzel', serif",
-                        fontWeight: 700, fontSize: 11,
-                        letterSpacing: 3, textTransform: "uppercase",
-                        cursor: "pointer",
-                        transition: "filter .2s",
-                    }}
-                        onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
-                        onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
-                    >
-                        ⬇ Descargar PNG
-                    </button>
+                    {/* download buttons */}
+                    <div style={{ display: "flex", gap: 8, margin: "0 20px 20px", flexDirection: "column" }}>
+                        <button onClick={download} style={{
+                            padding: "12px 0",
+                            background: "linear-gradient(135deg, #8B6914, #C9A84C)",
+                            border: "none",
+                            color: "#0A0A0F",
+                            fontFamily: "'Cinzel', serif",
+                            fontWeight: 700, fontSize: 11,
+                            letterSpacing: 3, textTransform: "uppercase",
+                            cursor: "pointer",
+                            transition: "filter .2s",
+                        }}
+                            onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
+                            onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
+                        >
+                            Descargar PNG
+                        </button>
+                        <button onClick={downloadInstagram} style={{
+                            padding: "12px 0",
+                            background: "linear-gradient(135deg, #833AB4, #C13584, #E1306C)",
+                            border: "none",
+                            color: "#FFFFFF",
+                            fontFamily: "'Cinzel', serif",
+                            fontWeight: 700, fontSize: 10,
+                            letterSpacing: 2, textTransform: "uppercase",
+                            cursor: "pointer",
+                            transition: "filter .2s",
+                        }}
+                            onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
+                            onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
+                        >
+                            Instagram 1080x1080
+                        </button>
+                    </div>
                 </div>
 
                 {/* ── CANVAS PREVIEW ── */}

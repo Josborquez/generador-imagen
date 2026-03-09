@@ -8,7 +8,7 @@
 
 export default function FormPanel({
   data, set, activeTab, setActiveTab,
-  photoUrl, handlePhoto, handleDrop, download,
+  photoUrl, handlePhoto, handleDrop, download, downloadInstagram,
   themeColors, deckStructure, gameSlug,
 }) {
   const tabs = ["info", "evento", "mazo"];
@@ -116,23 +116,39 @@ export default function FormPanel({
         </>}
       </div>
 
-      {/* Download button */}
-      <button onClick={download} style={{
-        margin: "0 20px 20px",
-        padding: "12px 0",
-        background: `linear-gradient(135deg, ${withAlpha(themeColors.primary, 0.7)}, ${themeColors.primary})`,
-        border: "none",
-        color: themeColors.bg,
-        fontWeight: 700, fontSize: 11,
-        letterSpacing: 3, textTransform: "uppercase",
-        cursor: "pointer",
-        transition: "filter .2s",
-      }}
-        onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
-        onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
-      >
-        Descargar PNG
-      </button>
+      {/* Download buttons */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "0 20px 20px" }}>
+        <button onClick={download} style={{
+          padding: "12px 0",
+          background: `linear-gradient(135deg, ${withAlpha(themeColors.primary, 0.7)}, ${themeColors.primary})`,
+          border: "none",
+          color: themeColors.bg,
+          fontWeight: 700, fontSize: 11,
+          letterSpacing: 3, textTransform: "uppercase",
+          cursor: "pointer",
+          transition: "filter .2s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
+          onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
+        >
+          Descargar PNG
+        </button>
+        <button onClick={downloadInstagram} style={{
+          padding: "12px 0",
+          background: "linear-gradient(135deg, #833AB4, #C13584, #E1306C)",
+          border: "none",
+          color: "#FFFFFF",
+          fontWeight: 700, fontSize: 10,
+          letterSpacing: 2, textTransform: "uppercase",
+          cursor: "pointer",
+          transition: "filter .2s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
+          onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
+        >
+          Instagram 1080x1080
+        </button>
+      </div>
     </div>
   );
 }
