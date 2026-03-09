@@ -159,7 +159,7 @@ export function renderCanvas(canvas, data, photoImg, gameConfig, logoImg) {
   // -- Leer sobreescrituras del editor de posicion (si existen) --
   const pos = data._pos || {};
   const nameOffBottom = pos.nameOffsetFromBottom ?? layout.name.offsetFromBottom;
-  const nameXShift    = pos.nameXShift ?? -30;           // desplazamiento horizontal desde el centro de la foto
+  const nameXShift    = pos.nameXShift ?? 0;              // desplazamiento horizontal desde el centro de la foto
   const nameLineSpace = pos.nameLineSpacing ?? layout.name.lineSpacing;
   const labelOffsetY  = pos.labelOffsetY ?? -4;          // offset Y de la etiqueta "GANADOR" respecto a nameY
   const firstNameOffY = pos.firstNameOffsetY ?? 12;      // offset Y del firstName respecto a nameY
@@ -173,10 +173,11 @@ export function renderCanvas(canvas, data, photoImg, gameConfig, logoImg) {
   ctx.textAlign = "center";
 
   // Lineas decorativas horizontales a los costados de la etiqueta (configurables)
-  const lineLeftX   = pos.lineLeftX ?? 18;
+  // Centradas simetricamente respecto a nameCX
+  const lineLeftX   = pos.lineLeftX ?? (nameCX - 90);
   const lineLeftLen = pos.lineLeftLen ?? 40;
-  const lineRightX  = pos.lineRightX ?? 172;
-  const lineRightLen = pos.lineRightLen ?? 50;
+  const lineRightX  = pos.lineRightX ?? (nameCX + 50);
+  const lineRightLen = pos.lineRightLen ?? 40;
 
   ctx.strokeStyle = withAlpha(colors.primary, 0.45);
   ctx.lineWidth = 1;
@@ -351,7 +352,12 @@ export function renderCanvas(canvas, data, photoImg, gameConfig, logoImg) {
     else if (logoCorner === "bottom-left")  { lx = logoOffX; ly = H - lh - logoOffY; }
     else /* bottom-right */                 { lx = W - lw - logoOffX; ly = H - lh - logoOffY; }
 
+    // Activar suavizado de alta calidad para evitar logo pixelado
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.drawImage(logoImg, lx, ly, lw, lh);
+    ctx.restore();
   }
 
   // ── Border ──────────────────────────────────────────────────

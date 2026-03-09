@@ -285,7 +285,7 @@ function PositionEditor({ data, set, colors, layoutConfig, logoImg, onLogoUpload
   const pos = data._pos || {};
   const defaults = {
     nameOffsetFromBottom: layoutConfig?.name?.offsetFromBottom ?? 55,
-    nameXShift: -30,
+    nameXShift: 0,
     nameLineSpacing: layoutConfig?.name?.lineSpacing ?? 26,
     labelOffsetY: -4,
     firstNameOffsetY: 12,
